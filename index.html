@@ -61,11 +61,12 @@
       const status = document.getElementById('status');
       status.innerText = "⏳ Verifica in corso...";
       
-      // Inviamo i dati in un formato che ci permette di leggere la risposta
+      // Inviamo i dati in modo "semplice" per evitare blocchi CORS
       fetch(SCRIPT_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: "testoLetto=" + encodeURIComponent(testo)
+        body: JSON.stringify({testoLetto: testo})
+        // Nota: Niente "mode: no-cors" e niente "headers". 
+        // Questo permette al browser di leggere la risposta di Google!
       })
       .then(response => response.json())
       .then(data => {
@@ -76,7 +77,7 @@
         }
       })
       .catch(err => {
-        status.innerText = "❌ Errore di rete";
+        status.innerText = "❌ Errore: " + err.message;
       });
     }
 
