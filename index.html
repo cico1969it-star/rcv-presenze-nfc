@@ -26,40 +26,42 @@
   <p id="status">In attesa...</p>
   <p id="vincitore"></p>
 
-  <script>
-    // ⚠️ INCOLLA QUI IL TUO URL DI GOOGLE APPS SCRIPT ⚠️
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMeHxt1EXJ3tfwRJ_m4Tl6hkaYajAI7yJplV4r-Fw4wPx3_nKC5Q9O1t4Lry_WvF3Pxg/exec";
+<script>
+  // ⚠️ INCOLLA QUI IL TUO URL DI GOOGLE APPS SCRIPT ⚠️
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMeHxt1EXJ3tfwRJ_m4Tl6hkaYajAI7yJplV4r-Fw4wPx3_nKC5Q9O1t4Lry_WvF3Pxg/exec";
 
-    let ndefReader = null;
-    let scanController = null;
+  // Variabili di stato
+  let isScanning = false; // Il nostro "interruttore software"
+  let ndefReader = null;
 
-    // Funzione per emettere un bip
-    function playBeep(duplicato) {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      // Se duplicato suona più basso, altrimenti alto
-      osc.frequency.value = duplicato ? 300 : 800; 
-      gain.gain.value = 0.1;
-      osc.start();
-      setTimeout(() => osc.stop(), 150);
+  // Funzione per emettere un bip
+  function playBeep(duplicato) {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = duplicato ? 300 : 800; 
+    gain.gain.value = 0.1;
+    osc.start();
+    setTimeout(() => osc.stop(), 150);
+  }
+
+  async function startScan() {
+    const status = document.getElementById('status');
+    if (!("NDEFReader" in window)) {
+      status.innerText = "❌ Usa Chrome su Android!"; return;
     }
-
-    async function startScan() {
-      const status = document.getElementById('status');
-      if (!("NDEFReader" in window)) {
-        status.innerText = "❌ Usa Chrome su Android!"; return;
-      }
-      try {
-        scanController = new AbortController();
+    
+    try {
+      // Creiamo il lettore solo la prima volta
+      if (!ndefReader) {
         ndefReader = new NDEFReader();
-
-        // 1. PRIMA diciamo al browser cosa fare quando legge una card
+        
+        // Configuriamo cosa fare quando legge (per sempre)
         ndefReader.onreading = event => {
-          // Sicurezza: se nel frattempo abbiamo premuto stop, ignora la lettura
-          if (!scanController || scanController.signal.aborted) return;
+          // IL TRUCCO: Se l'interruttore è su OFF, ignora la card
+          if (!isScanning) return; 
 
           const textDecoder = new TextDecoder();
           let nomeTrovato = null;
@@ -72,57 +74,95 @@
             inviaAlFoglio(nomeTrovato);
           }
         };
-
-        // Ignoriamo gli errori di lettura silenziosi per non intasare lo schermo
         ndefReader.onreadingerror = () => {};
-
-        // 2. SOLO DOPO accendiamo l'antenna NFC
-        await ndefReader.scan({ signal: scanController.signal });
-
-        // 3. Aggiorniamo l'interfaccia
-        document.getElementById('startBtn').style.display = 'none';
-        document.getElementById('stopBtn').style.display = 'block';
-        status.innerHTML = '<span class="listening">🟢 IN ASCOLTO... Avvicina la card</span>';
-
-      } catch (error) {
-        status.innerText = "❌ Errore: " + error.message;
       }
-    }
 
-    function stopScan() {
-      if (scanController) {
-        scanController.abort(); // Questo è il comando che spegne davvero l'antenna!
-        scanController = null;
+      // Accendiamo l'antenna
+      await ndefReader.scan();
+      
+      // Accendiamo l'interruttore software
+      isScanning = true;
+
+      // Aggiorniamo l'interfaccia
+      document.getElementById('startBtn').style.display = 'none';
+      document.getElementById('stopBtn').style.display = 'block';
+      status.innerHTML = '<span class="listening">🟢 IN ASCOLTO... Avvicina la card</span>';
+
+    } catch (error) {
+      status.innerText = "❌ Errore: " + error.message;
+    }
+  }
+
+  function stopScan() {
+    // Spegniamo SOLO l'interruttore software
+    isScanning = false;
+    
+    document.getElementById('startBtn').style.display = 'block';
+    document.getElementById('stopBtn').style.display = 'none';
+    document.getElementById('status').innerText = "⏸️ Scansione fermata.";
+  }
+
+  function inviaAlFoglio(testo) {
+    const status = document.getElementById('status');
+    navigator.vibrate(100); 
+    
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({testoLetto: testo})
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === "duplicato") {
+        status.innerText = "⚠️ Già presente: " + testo;
+        navigator.vibrate([100, 50, 100]); 
+        playBeep(true);
+      } else {
+        status.innerText = "✅ Registrato: " + testo;
+        playBeep(false);
       }
-      document.getElementById('startBtn').style.display = 'block';
-      document.getElementById('stopBtn').style.display = 'none';
-      document.getElementById('status').innerText = "⏸️ Scansione fermata.";
-    }
+      
+      setTimeout(() => {
+        if(isScanning) status.innerHTML = '<span class="listening">🟢 IN ASCOLTO... Avvicina la card</span>';
+      }, 2000);
+    })
+    .catch(err => {
+      status.innerText = "❌ Errore di rete";
+    });
+  }
 
-    async function estraiFortunato() {
-      // ... (lascia invariato il codice dell'estrazione che avevi prima) ...
-      const status = document.getElementById('status');
-      const vincitore = document.getElementById('vincitore');
-      status.innerText = "🎲 Estrazione in corso...";
-      vincitore.innerText = "";
-      try {
-        const response = await fetch(SCRIPT_URL);
-        const presenze = await response.json();
-        if (presenze.length === 0) { status.innerText = "⚠️ Nessuna presenza oggi!"; return; }
-        let conteggio = 0;
-        const intervallo = setInterval(() => {
-          const casuale = presenze[Math.floor(Math.random() * presenze.length)];
-          vincitore.innerText = casuale;
-          conteggio++;
-          if (conteggio > 20) {
-            clearInterval(intervallo);
-            const vincitoreFinale = presenze[Math.floor(Math.random() * presenze.length)];
-            vincitore.innerText = "🏆 " + vincitoreFinale;
-            status.innerText = "✅ Estratto da " + presenze.length + " presenze!";
-          }
-        }, 100);
-      } catch (error) { status.innerText = "❌ Errore: " + error.message; }
+  async function estraiFortunato() {
+    const status = document.getElementById('status');
+    const vincitore = document.getElementById('vincitore');
+    status.innerText = "🎲 Estrazione in corso...";
+    vincitore.innerText = "";
+    
+    try {
+      const response = await fetch(SCRIPT_URL);
+      const presenze = await response.json();
+      
+      if (presenze.length === 0) { 
+        status.innerText = "⚠️ Nessuna presenza oggi!"; 
+        return; 
+      }
+      
+      let conteggio = 0;
+      const intervallo = setInterval(() => {
+        const casuale = presenze[Math.floor(Math.random() * presenze.length)];
+        vincitore.innerText = casuale;
+        conteggio++;
+        
+        if (conteggio > 20) {
+          clearInterval(intervallo);
+          const vincitoreFinale = presenze[Math.floor(Math.random() * presenze.length)];
+          vincitore.innerText = "🏆 " + vincitoreFinale;
+          status.innerText = "✅ Estratto da " + presenze.length + " presenze!";
+        }
+      }, 100);
+      
+    } catch (error) { 
+      status.innerText = "❌ Errore: " + error.message; 
     }
-  </script>
+  }
+</script>
 </body>
 </html>
