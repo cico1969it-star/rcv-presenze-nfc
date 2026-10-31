@@ -31,6 +31,7 @@
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMeHxt1EXJ3tfwRJ_m4Tl6hkaYajAI7yJplV4r-Fw4wPx3_nKC5Q9O1t4Lry_WvF3Pxg/exec";
 
     let ndefReader = null;
+    let scanController = null;
 
     // Funzione per emettere un bip
     function playBeep(duplicato) {
@@ -52,10 +53,12 @@
         status.innerText = "❌ Usa Chrome su Android!"; return;
       }
       try {
+        scanController = new AbortController(); // Crea il "telecomando" di stop
         ndefReader = new NDEFReader();
-        await ndefReader.scan();
         
-        // Cambia l'interfaccia per mostrare che è in ascolto
+        // Avvia la scansione passando il segnale di stop
+        await ndefReader.scan({ signal: scanController.signal }); 
+        
         document.getElementById('startBtn').style.display = 'none';
         document.getElementById('stopBtn').style.display = 'block';
         status.innerHTML = '<span class="listening">🟢 IN ASCOLTO... Avvicina la card</span>';
@@ -78,44 +81,13 @@
     }
 
     function stopScan() {
-      if (ndefReader) {
-        ndefReader.abort(); // Ferma l'antenna NFC
-        ndefReader = null;
+      if (scanController) {
+        scanController.abort(); // Questo è il comando che spegne davvero l'antenna!
+        scanController = null;
       }
       document.getElementById('startBtn').style.display = 'block';
       document.getElementById('stopBtn').style.display = 'none';
       document.getElementById('status').innerText = "⏸️ Scansione fermata.";
-    }
-
-    function inviaAlFoglio(testo) {
-      const status = document.getElementById('status');
-      
-      // Feedback immediato (Vibrazione + Bip) prima ancora che Google risponda
-      navigator.vibrate(100); 
-      
-      fetch(SCRIPT_URL, {
-        method: 'POST',
-        body: JSON.stringify({testoLetto: testo})
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.status === "duplicato") {
-          status.innerText = "⚠️ Già presente: " + testo;
-          navigator.vibrate([100, 50, 100]); // Vibra due volte
-          playBeep(true);
-        } else {
-          status.innerText = "✅ Registrato: " + testo;
-          playBeep(false);
-        }
-        
-        // Dopo 2 secondi, rimette il messaggio "In ascolto" per la prossima card
-        setTimeout(() => {
-          if(ndefReader) status.innerHTML = '<span class="listening">🟢 IN ASCOLTO... Avvicina la card</span>';
-        }, 2000);
-      })
-      .catch(err => {
-        status.innerText = "❌ Errore di rete";
-      });
     }
 
     async function estraiFortunato() {
