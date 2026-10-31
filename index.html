@@ -6,38 +6,61 @@
   <title>Admin NFC</title>
   <style>
     body { font-family: sans-serif; text-align: center; padding: 30px; background: #2c3e50; color: white; }
-    button { padding: 20px 40px; font-size: 20px; border: none; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 20px;}
-    .btn-scan { background: #e74c3c; color: white; }
+    button { padding: 20px 40px; font-size: 20px; border: none; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 20px; font-weight: bold;}
+    .btn-scan { background: #27ae60; color: white; }
+    .btn-stop { background: #c0392b; color: white; }
     .btn-estrai { background: #f39c12; color: white; }
-    #status { margin-top: 25px; font-size: 18px; color: #ecf0f1; }
+    #status { margin-top: 25px; font-size: 22px; color: #ecf0f1; min-height: 30px; }
     #vincitore { margin-top: 30px; font-size: 32px; color: #2ecc71; font-weight: bold; min-height: 50px; }
+    .listening { color: #2ecc71; font-weight: bold; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
   </style>
 </head>
 <body>
   <h1>🛡️ Pannello Admin</h1>
   
-  <button class="btn-scan" onclick="startScan()">📡 LEGGI CARD NFC</button>
+  <button id="startBtn" class="btn-scan" onclick="startScan()">📡 AVVIA SCANSIONE CONTINUA</button>
+  <button id="stopBtn" class="btn-stop" onclick="stopScan()" style="display:none;">⏹️ FERMA SCANSIONE</button>
   <button class="btn-estrai" onclick="estraiFortunato()">🎲 ESTRAI FORTUNATO</button>
   
   <p id="status">In attesa...</p>
   <p id="vincitore"></p>
 
   <script>
-    // ⚠️ INCOLLA QUI IL NUOVO URL DI GOOGLE APPS SCRIPT ⚠️
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMeHxt1EXJ3tfwRJ_m4Tl6hkaYajAI7yJplV4r-Fw4wPx3_nKC5Q9O1t4Lry_WvF3Pxg/exec";
+    // ⚠️ INCOLLA QUI IL TUO URL DI GOOGLE APPS SCRIPT ⚠️
+    const SCRIPT_URL = "IL_TUO_URL_APPS_SCRIPT_QUI";
 
-    // Funzione per leggere la card NFC
+    let ndefReader = null;
+
+    // Funzione per emettere un bip
+    function playBeep(duplicato) {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      // Se duplicato suona più basso, altrimenti alto
+      osc.frequency.value = duplicato ? 300 : 800; 
+      gain.gain.value = 0.1;
+      osc.start();
+      setTimeout(() => osc.stop(), 150);
+    }
+
     async function startScan() {
       const status = document.getElementById('status');
       if (!("NDEFReader" in window)) {
         status.innerText = "❌ Usa Chrome su Android!"; return;
       }
       try {
-        status.innerText = "🔍 Avvicina la card...";
-        const ndef = new NDEFReader();
-        await ndef.scan();
+        ndefReader = new NDEFReader();
+        await ndefReader.scan();
         
-        ndef.onreading = event => {
+        // Cambia l'interfaccia per mostrare che è in ascolto
+        document.getElementById('startBtn').style.display = 'none';
+        document.getElementById('stopBtn').style.display = 'block';
+        status.innerHTML = '<span class="listening">🟢 IN ASCOLTO... Avvicina la card</span>';
+
+        ndefReader.onreading = event => {
           const textDecoder = new TextDecoder();
           let nomeTrovato = null;
           for (const record of event.message.records) {
@@ -46,10 +69,7 @@
             }
           }
           if (nomeTrovato) {
-            status.innerText = "✅ Letto: " + nomeTrovato;
             inviaAlFoglio(nomeTrovato);
-          } else {
-            status.innerText = "⚠️ Nessun nome trovato!";
           }
         };
       } catch (error) {
@@ -57,54 +77,62 @@
       }
     }
 
+    function stopScan() {
+      if (ndefReader) {
+        ndefReader.abort(); // Ferma l'antenna NFC
+        ndefReader = null;
+      }
+      document.getElementById('startBtn').style.display = 'block';
+      document.getElementById('stopBtn').style.display = 'none';
+      document.getElementById('status').innerText = "⏸️ Scansione fermata.";
+    }
+
     function inviaAlFoglio(testo) {
       const status = document.getElementById('status');
-      status.innerText = "⏳ Verifica in corso...";
       
-      // Inviamo i dati in modo "semplice" per evitare blocchi CORS
+      // Feedback immediato (Vibrazione + Bip) prima ancora che Google risponda
+      navigator.vibrate(100); 
+      
       fetch(SCRIPT_URL, {
         method: 'POST',
         body: JSON.stringify({testoLetto: testo})
-        // Nota: Niente "mode: no-cors" e niente "headers". 
-        // Questo permette al browser di leggere la risposta di Google!
       })
       .then(response => response.json())
       .then(data => {
         if (data.status === "duplicato") {
-          status.innerText = "⚠️ " + testo + " è già registrato oggi!";
+          status.innerText = "⚠️ Già presente: " + testo;
+          navigator.vibrate([100, 50, 100]); // Vibra due volte
+          playBeep(true);
         } else {
-          status.innerText = "✅ " + testo + " registrato con successo!";
+          status.innerText = "✅ Registrato: " + testo;
+          playBeep(false);
         }
+        
+        // Dopo 2 secondi, rimette il messaggio "In ascolto" per la prossima card
+        setTimeout(() => {
+          if(ndefReader) status.innerHTML = '<span class="listening">🟢 IN ASCOLTO... Avvicina la card</span>';
+        }, 2000);
       })
       .catch(err => {
-        status.innerText = "❌ Errore: " + err.message;
+        status.innerText = "❌ Errore di rete";
       });
     }
 
-    // Nuova funzione: Estrae un nome a caso dalle presenze di oggi
     async function estraiFortunato() {
+      // ... (lascia invariato il codice dell'estrazione che avevi prima) ...
       const status = document.getElementById('status');
       const vincitore = document.getElementById('vincitore');
-      
       status.innerText = "🎲 Estrazione in corso...";
       vincitore.innerText = "";
-      
       try {
         const response = await fetch(SCRIPT_URL);
         const presenze = await response.json();
-        
-        if (presenze.length === 0) {
-          status.innerText = "⚠️ Nessuna presenza registrata oggi!";
-          return;
-        }
-        
-        // Effetto "roulette" per 2 secondi
+        if (presenze.length === 0) { status.innerText = "⚠️ Nessuna presenza oggi!"; return; }
         let conteggio = 0;
         const intervallo = setInterval(() => {
           const casuale = presenze[Math.floor(Math.random() * presenze.length)];
           vincitore.innerText = casuale;
           conteggio++;
-          
           if (conteggio > 20) {
             clearInterval(intervallo);
             const vincitoreFinale = presenze[Math.floor(Math.random() * presenze.length)];
@@ -112,10 +140,7 @@
             status.innerText = "✅ Estratto da " + presenze.length + " presenze!";
           }
         }, 100);
-        
-      } catch (error) {
-        status.innerText = "❌ Errore: " + error.message;
-      }
+      } catch (error) { status.innerText = "❌ Errore: " + error.message; }
     }
   </script>
 </body>
