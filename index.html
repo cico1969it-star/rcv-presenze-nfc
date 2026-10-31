@@ -58,13 +58,25 @@
     }
 
     function inviaAlFoglio(testo) {
+      const status = document.getElementById('status');
+      status.innerText = "⏳ Verifica in corso...";
+      
+      // Inviamo i dati in un formato che ci permette di leggere la risposta
       fetch(SCRIPT_URL, {
         method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ testoLetto: testo })
-      }).then(() => {
-        document.getElementById('status').innerText += " (Salvato!)";
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: "testoLetto=" + encodeURIComponent(testo)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === "duplicato") {
+          status.innerText = "⚠️ " + testo + " è già registrato oggi!";
+        } else {
+          status.innerText = "✅ " + testo + " registrato con successo!";
+        }
+      })
+      .catch(err => {
+        status.innerText = "❌ Errore di rete";
       });
     }
 
