@@ -6,20 +6,27 @@
   <title>Admin NFC</title>
   <style>
     body { font-family: sans-serif; text-align: center; padding: 30px; background: #2c3e50; color: white; }
-    button { background: #e74c3c; color: white; padding: 20px 40px; font-size: 20px; border: none; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 20px;}
+    button { padding: 20px 40px; font-size: 20px; border: none; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 20px;}
+    .btn-scan { background: #e74c3c; color: white; }
+    .btn-estrai { background: #f39c12; color: white; }
     #status { margin-top: 25px; font-size: 18px; color: #ecf0f1; }
+    #vincitore { margin-top: 30px; font-size: 32px; color: #2ecc71; font-weight: bold; min-height: 50px; }
   </style>
 </head>
 <body>
   <h1>🛡️ Pannello Admin</h1>
-  <p>Usa questa app per registrare le presenze</p>
-  <button onclick="startScan()">LEGGI SOLO IL NOME</button>
+  
+  <button class="btn-scan" onclick="startScan()">📡 LEGGI CARD NFC</button>
+  <button class="btn-estrai" onclick="estraiFortunato()">🎲 ESTRAI FORTUNATO</button>
+  
   <p id="status">In attesa...</p>
+  <p id="vincitore"></p>
 
   <script>
-    // ⚠️ INCOLLA QUI IL TUO URL DI GOOGLE APPS SCRIPT ⚠️
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfCassJIX9Tw6ms5OAXL27U00pD71q4k4BjJSjXT3-tStmGbY2y3jGfOJo3rNAycyJsA/exec";
+    // ⚠️ INCOLLA QUI IL NUOVO URL DI GOOGLE APPS SCRIPT ⚠️
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyqwOiiT3wmB_90ueA8c4-b63RjOvPqLW16AVM9ncwH0S5ly3UKiSAoWW6KYFR7FM6c/exec";
 
+    // Funzione per leggere la card NFC
     async function startScan() {
       const status = document.getElementById('status');
       if (!("NDEFReader" in window)) {
@@ -33,20 +40,16 @@
         ndef.onreading = event => {
           const textDecoder = new TextDecoder();
           let nomeTrovato = null;
-
-          // IL TRUCCO: Cicliamo su tutti i record della card
           for (const record of event.message.records) {
-            // Ignoriamo l'URL (recordType "url") e cerchiamo solo il testo
             if (record.recordType === "text") {
               nomeTrovato = textDecoder.decode(record.data);
             }
           }
-
           if (nomeTrovato) {
             status.innerText = "✅ Letto: " + nomeTrovato;
             inviaAlFoglio(nomeTrovato);
           } else {
-            status.innerText = "⚠️ Nessun nome trovato sulla card!";
+            status.innerText = "⚠️ Nessun nome trovato!";
           }
         };
       } catch (error) {
@@ -57,12 +60,49 @@
     function inviaAlFoglio(testo) {
       fetch(SCRIPT_URL, {
         method: 'POST',
-        mode: 'no-cors', 
+        mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ testoLetto: testo })
       }).then(() => {
         document.getElementById('status').innerText += " (Salvato!)";
       });
+    }
+
+    // Nuova funzione: Estrae un nome a caso dalle presenze di oggi
+    async function estraiFortunato() {
+      const status = document.getElementById('status');
+      const vincitore = document.getElementById('vincitore');
+      
+      status.innerText = "🎲 Estrazione in corso...";
+      vincitore.innerText = "";
+      
+      try {
+        const response = await fetch(SCRIPT_URL);
+        const presenze = await response.json();
+        
+        if (presenze.length === 0) {
+          status.innerText = "⚠️ Nessuna presenza registrata oggi!";
+          return;
+        }
+        
+        // Effetto "roulette" per 2 secondi
+        let conteggio = 0;
+        const intervallo = setInterval(() => {
+          const casuale = presenze[Math.floor(Math.random() * presenze.length)];
+          vincitore.innerText = casuale;
+          conteggio++;
+          
+          if (conteggio > 20) {
+            clearInterval(intervallo);
+            const vincitoreFinale = presenze[Math.floor(Math.random() * presenze.length)];
+            vincitore.innerText = "🏆 " + vincitoreFinale;
+            status.innerText = "✅ Estratto da " + presenze.length + " presenze!";
+          }
+        }, 100);
+        
+      } catch (error) {
+        status.innerText = "❌ Errore: " + error.message;
+      }
     }
   </script>
 </body>
