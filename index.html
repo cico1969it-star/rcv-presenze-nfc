@@ -31,7 +31,8 @@
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMeHxt1EXJ3tfwRJ_m4Tl6hkaYajAI7yJplV4r-Fw4wPx3_nKC5Q9O1t4Lry_WvF3Pxg/exec";
 
   // Variabili di stato
-  let isScanning = false; // Il nostro "interruttore software"
+  let isScanning = false;       // Interruttore software (UI)
+  let hardwareStarted = false;  // Tiene traccia se l'antenna fisica è già accesa
   let ndefReader = null;
 
   // Funzione per emettere un bip
@@ -54,13 +55,13 @@
     }
     
     try {
-      // Creiamo il lettore solo la prima volta
+      // 1. Creiamo il lettore solo la prima volta in assoluto
       if (!ndefReader) {
         ndefReader = new NDEFReader();
         
         // Configuriamo cosa fare quando legge (per sempre)
         ndefReader.onreading = event => {
-          // IL TRUCCO: Se l'interruttore è su OFF, ignora la card
+          // IL TRUCCO: Se l'interruttore software è su OFF, ignora la card
           if (!isScanning) return; 
 
           const textDecoder = new TextDecoder();
@@ -77,13 +78,14 @@
         ndefReader.onreadingerror = () => {};
       }
 
-      // Accendiamo l'antenna
-      await ndefReader.scan();
-      
-      // Accendiamo l'interruttore software
-      isScanning = true;
+      // 2. Accendiamo l'antenna fisica SOLO se non è già attiva
+      if (!hardwareStarted) {
+        await ndefReader.scan();
+        hardwareStarted = true; // Ricorda che l'hardware è acceso
+      }
 
-      // Aggiorniamo l'interfaccia
+      // 3. Accendiamo l'interruttore software e aggiorniamo la UI
+      isScanning = true;
       document.getElementById('startBtn').style.display = 'none';
       document.getElementById('stopBtn').style.display = 'block';
       status.innerHTML = '<span class="listening">🟢 IN ASCOLTO... Avvicina la card</span>';
@@ -94,7 +96,7 @@
   }
 
   function stopScan() {
-    // Spegniamo SOLO l'interruttore software
+    // Spegniamo SOLO l'interruttore software (l'hardware resta acceso ma ignoriamo le letture)
     isScanning = false;
     
     document.getElementById('startBtn').style.display = 'block';
