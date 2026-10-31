@@ -5,180 +5,210 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin NFC</title>
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 30px; background: #2c3e50; color: white; }
-    button { padding: 20px 40px; font-size: 20px; border: none; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 20px; font-weight: bold;}
+    body { font-family: sans-serif; text-align: center; padding: 20px; background: #2c3e50; color: white; margin: 0; }
+    h1 { font-size: 24px; margin-bottom: 20px; }
+    button { padding: 15px 25px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; }
     .btn-scan { background: #27ae60; color: white; }
     .btn-stop { background: #c0392b; color: white; }
     .btn-estrai { background: #f39c12; color: white; }
-    #status { margin-top: 25px; font-size: 22px; color: #ecf0f1; min-height: 30px; }
-    #vincitore { margin-top: 30px; font-size: 32px; color: #2ecc71; font-weight: bold; min-height: 50px; }
+    .btn-archivia { background: #9b59b6; color: white; }
+    .btn-aggiorna { background: #3498db; color: white; padding: 10px 20px; font-size: 14px; }
+    #status { margin-top: 20px; font-size: 20px; color: #ecf0f1; min-height: 30px; }
+    #vincitore { margin-top: 20px; font-size: 28px; color: #2ecc71; font-weight: bold; min-height: 40px; }
     .listening { color: #2ecc71; font-weight: bold; animation: pulse 1.5s infinite; }
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    hr { border-color: #7f8c8d; margin: 25px 0; }
+    h3 { margin: 15px 0 10px 0; font-size: 20px; }
+    #lista-presenze { list-style: none; padding: 0; text-align: left; max-width: 400px; margin: 0 auto; }
+    #lista-presenze li { background: #34495e; padding: 12px; margin: 8px 0; border-radius: 8px; border-left: 5px solid #2ecc71; font-size: 18px; }
+    .btn-container { display: flex; gap: 10px; }
+    .btn-container button { flex: 1; }
   </style>
 </head>
 <body>
-  <h1>🛡️ Pannello Admin</h1>
+  <h1>🛡️ Pannello Admin NFC</h1>
   
-  <button id="startBtn" class="btn-scan" onclick="startScan()">📡 AVVIA SCANSIONE CONTINUA</button>
+  <button id="startBtn" class="btn-scan" onclick="startScan()">📡 AVVIA SCANSIONE</button>
   <button id="stopBtn" class="btn-stop" onclick="stopScan()" style="display:none;">⏹️ FERMA SCANSIONE</button>
-  <button class="btn-estrai" onclick="estraiFortunato()">🎲 ESTRAI FORTUNATO</button>
+  
+  <div class="btn-container">
+    <button class="btn-estrai" onclick="estraiFortunato()">🎲 ESTRAI</button>
+    <button class="btn-archivia" onclick="archiviaGiornata()">🗄️ ARCHIVIA</button>
+  </div>
   
   <p id="status">In attesa...</p>
   <p id="vincitore"></p>
 
-  <hr style="border-color: #7f8c8d; margin: 30px 0;">
+  <hr>
   <h3>📋 Presenti Oggi (<span id="conteggio">0</span>)</h3>
-  <button onclick="caricaLista()" style="background: #3498db; padding: 10px 20px; font-size: 16px; margin-bottom: 15px;">🔄 Aggiorna Elenco</button>
-  <ul id="lista-presenze" style="list-style: none; padding: 0; text-align: left; max-width: 400px; margin: 0 auto;"></ul>
-  
-<script>
-  // ⚠️ INCOLLA QUI IL TUO URL DI GOOGLE APPS SCRIPT ⚠️
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMeHxt1EXJ3tfwRJ_m4Tl6hkaYajAI7yJplV4r-Fw4wPx3_nKC5Q9O1t4Lry_WvF3Pxg/exec";
+  <button class="btn-aggiorna" onclick="caricaLista()">🔄 Aggiorna Elenco</button>
+  <ul id="lista-presenze"></ul>
 
-  let isScanning = false;
-  let hardwareStarted = false;
-  let ndefReader = null;
-  let presentiOggi = []; // Array locale per tenere traccia dei nomi
+  <script>
+    // ⚠️ INCOLLA QUI IL TUO URL DI GOOGLE APPS SCRIPT ⚠️
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMeHxt1EXJ3tfwRJ_m4Tl6hkaYajAI7yJplV4r-Fw4wPx3_nKC5Q9O1t4Lry_WvF3Pxg/exec";
 
-  function playBeep(duplicato) {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.frequency.value = duplicato ? 300 : 800; 
-    gain.gain.value = 0.1; osc.start();
-    setTimeout(() => osc.stop(), 150);
-  }
+    let isScanning = false;
+    let hardwareStarted = false;
+    let ndefReader = null;
+    let presentiOggi = [];
 
-  // --- NUOVA FUNZIONE: Carica la lista da Google ---
-  async function caricaLista() {
-    const listaEl = document.getElementById('lista-presenze');
-    const conteggioEl = document.getElementById('conteggio');
-    listaEl.innerHTML = '<li style="text-align:center; color:#bdc3c7;">Caricamento...</li>';
-    
-    try {
-      const response = await fetch(SCRIPT_URL);
-      const dati = await response.json();
-      presentiOggi = dati; // Salva i dati in memoria
-      
-      listaEl.innerHTML = ''; // Pulisce la lista
-      if (presentiOggi.length === 0) {
-        listaEl.innerHTML = '<li style="text-align:center; color:#bdc3c7;">Nessuna presenza oggi.</li>';
-      } else {
-        // Mostra i nomi (dall'ultimo al primo)
-        presentiOggi.slice().reverse().forEach(nome => {
-          const li = document.createElement('li');
-          li.style.cssText = 'background: #34495e; padding: 12px; margin: 8px 0; border-radius: 8px; border-left: 5px solid #2ecc71; font-size: 18px;';
-          li.innerText = nome;
-          listaEl.appendChild(li);
-        });
-      }
-      conteggioEl.innerText = presentiOggi.length;
-    } catch (error) {
-      listaEl.innerHTML = '<li style="color:red;">Errore caricamento</li>';
+    function playBeep(duplicato) {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = duplicato ? 300 : 800; 
+      gain.gain.value = 0.1; osc.start();
+      setTimeout(() => osc.stop(), 150);
     }
-  }
 
-  // --- NUOVA FUNZIONE: Aggiunge un nome alla lista visiva ---
-  function aggiungiAllaListaVisiva(nome) {
-    // Controllo locale anti-doppio
-    if (presentiOggi.includes(nome)) return;
-    
-    presentiOggi.push(nome);
-    document.getElementById('conteggio').innerText = presentiOggi.length;
-    
-    const listaEl = document.getElementById('lista-presenze');
-    // Rimuove il messaggio "Nessuna presenza" se c'è
-    if (listaEl.innerText.includes('Nessuna presenza')) listaEl.innerHTML = '';
-    
-    const li = document.createElement('li');
-    li.style.cssText = 'background: #34495e; padding: 12px; margin: 8px 0; border-radius: 8px; border-left: 5px solid #2ecc71; font-size: 18px; animation: slideIn 0.3s ease-out;';
-    li.innerText = nome;
-    
-    // Aggiunge in cima alla lista
-    listaEl.insertBefore(li, listaEl.firstChild);
-  }
-
-  async function startScan() {
-    const status = document.getElementById('status');
-    if (!("NDEFReader" in window)) { status.innerText = "❌ Usa Chrome su Android!"; return; }
-    try {
-      if (!ndefReader) {
-        ndefReader = new NDEFReader();
-        ndefReader.onreading = event => {
-          if (!isScanning) return;
-          const textDecoder = new TextDecoder();
-          let nomeTrovato = null;
-          for (const record of event.message.records) {
-            if (record.recordType === "text") nomeTrovato = textDecoder.decode(record.data);
-          }
-          if (nomeTrovato) inviaAlFoglio(nomeTrovato);
-        };
-        ndefReader.onreadingerror = () => {};
-      }
-      if (!hardwareStarted) { await ndefReader.scan(); hardwareStarted = true; }
-      isScanning = true;
-      document.getElementById('startBtn').style.display = 'none';
-      document.getElementById('stopBtn').style.display = 'block';
-      status.innerHTML = '<span class="listening">🟢 IN ASCOLTO... Avvicina la card</span>';
-    } catch (error) { status.innerText = "❌ Errore: " + error.message; }
-  }
-
-  function stopScan() {
-    isScanning = false;
-    document.getElementById('startBtn').style.display = 'block';
-    document.getElementById('stopBtn').style.display = 'none';
-    document.getElementById('status').innerText = "⏸️ Scansione fermata.";
-  }
-
-  function inviaAlFoglio(testo) {
-    const status = document.getElementById('status');
-    navigator.vibrate(100); 
-    fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({testoLetto: testo}) })
-    .then(response => response.json())
-    .then(data => {
-      if (data.status === "duplicato") {
-        status.innerText = "⚠️ Già presente: " + testo;
-        navigator.vibrate([100, 50, 100]); playBeep(true);
-      } else {
-        status.innerText = "✅ Registrato: " + testo;
-        playBeep(false);
-        aggiungiAllaListaVisiva(testo); // <--- AGGIUNGE ALLA LISTA A SCHERMO
-      }
-      setTimeout(() => { if(isScanning) status.innerHTML = '<span class="listening">🟢 IN ASCOLTO... Avvicina la card</span>'; }, 2000);
-    })
-    .catch(err => { status.innerText = "❌ Errore di rete"; });
-  }
-
-  async function estraiFortunato() {
-    const status = document.getElementById('status');
-    const vincitore = document.getElementById('vincitore');
-    status.innerText = "🎲 Estrazione in corso...";
-    vincitore.innerText = "";
-    try {
-      // Usa i dati già caricati in memoria per velocizzare
-      if (presentiOggi.length === 0) { 
-        // Se l'array è vuoto, prova a ricaricare
-        await caricaLista();
-        if (presentiOggi.length === 0) { status.innerText = "⚠️ Nessuna presenza oggi!"; return; }
-      }
-      let conteggio = 0;
-      const intervallo = setInterval(() => {
-        const casuale = presentiOggi[Math.floor(Math.random() * presentiOggi.length)];
-        vincitore.innerText = casuale;
-        conteggio++;
-        if (conteggio > 20) {
-          clearInterval(intervallo);
-          const vincitoreFinale = presentiOggi[Math.floor(Math.random() * presentiOggi.length)];
-          vincitore.innerText = "🏆 " + vincitoreFinale;
-          status.innerText = "✅ Estratto da " + presentiOggi.length + " presenze!";
+    async function caricaLista() {
+      const listaEl = document.getElementById('lista-presenze');
+      const conteggioEl = document.getElementById('conteggio');
+      listaEl.innerHTML = '<li style="text-align:center; color:#bdc3c7;">Caricamento...</li>';
+      
+      try {
+        const response = await fetch(SCRIPT_URL);
+        const dati = await response.json();
+        presentiOggi = dati;
+        
+        listaEl.innerHTML = '';
+        if (presentiOggi.length === 0) {
+          listaEl.innerHTML = '<li style="text-align:center; color:#bdc3c7;">Nessuna presenza oggi.</li>';
+        } else {
+          presentiOggi.slice().reverse().forEach(nome => {
+            const li = document.createElement('li');
+            li.innerText = nome;
+            listaEl.appendChild(li);
+          });
         }
-      }, 100);
-    } catch (error) { status.innerText = "❌ Errore: " + error.message; }
-  }
+        conteggioEl.innerText = presentiOggi.length;
+      } catch (error) {
+        listaEl.innerHTML = '<li style="color:red;">Errore caricamento</li>';
+      }
+    }
 
-  // Carica la lista automaticamente all'apertura della pagina
-  window.onload = caricaLista;
-</script>
+    function aggiungiAllaListaVisiva(nome) {
+      if (presentiOggi.includes(nome)) return;
+      presentiOggi.push(nome);
+      document.getElementById('conteggio').innerText = presentiOggi.length;
+      
+      const listaEl = document.getElementById('lista-presenze');
+      if (listaEl.innerText.includes('Nessuna presenza')) listaEl.innerHTML = '';
+      
+      const li = document.createElement('li');
+      li.innerText = nome;
+      listaEl.insertBefore(li, listaEl.firstChild);
+    }
+
+    async function startScan() {
+      const status = document.getElementById('status');
+      if (!("NDEFReader" in window)) { status.innerText = "❌ Usa Chrome su Android!"; return; }
+      try {
+        if (!ndefReader) {
+          ndefReader = new NDEFReader();
+          ndefReader.onreading = event => {
+            if (!isScanning) return;
+            const textDecoder = new TextDecoder();
+            let nomeTrovato = null;
+            for (const record of event.message.records) {
+              if (record.recordType === "text") nomeTrovato = textDecoder.decode(record.data);
+            }
+            if (nomeTrovato) inviaAlFoglio(nomeTrovato);
+          };
+          ndefReader.onreadingerror = () => {};
+        }
+        if (!hardwareStarted) { await ndefReader.scan(); hardwareStarted = true; }
+        isScanning = true;
+        document.getElementById('startBtn').style.display = 'none';
+        document.getElementById('stopBtn').style.display = 'block';
+        status.innerHTML = '<span class="listening">🟢 IN ASCOLTO... Avvicina la card</span>';
+      } catch (error) { status.innerText = "❌ Errore: " + error.message; }
+    }
+
+    function stopScan() {
+      isScanning = false;
+      document.getElementById('startBtn').style.display = 'block';
+      document.getElementById('stopBtn').style.display = 'none';
+      document.getElementById('status').innerText = "⏸️ Scansione fermata.";
+    }
+
+    function inviaAlFoglio(testo) {
+      const status = document.getElementById('status');
+      navigator.vibrate(100); 
+      fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({testoLetto: testo}) })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === "duplicato") {
+          status.innerText = "⚠️ Già presente: " + testo;
+          navigator.vibrate([100, 50, 100]); playBeep(true);
+        } else {
+          status.innerText = "✅ Registrato: " + testo;
+          playBeep(false);
+          aggiungiAllaListaVisiva(testo);
+        }
+        setTimeout(() => { if(isScanning) status.innerHTML = '<span class="listening">🟢 IN ASCOLTO... Avvicina la card</span>'; }, 2000);
+      })
+      .catch(err => { status.innerText = "❌ Errore di rete"; });
+    }
+
+    async function estraiFortunato() {
+      const status = document.getElementById('status');
+      const vincitore = document.getElementById('vincitore');
+      status.innerText = "🎲 Estrazione in corso...";
+      vincitore.innerText = "";
+      
+      try {
+        if (presentiOggi.length === 0) {
+          await caricaLista();
+          if (presentiOggi.length === 0) { status.innerText = "⚠️ Nessuna presenza oggi!"; return; }
+        }
+        
+        let conteggio = 0;
+        const intervallo = setInterval(() => {
+          const casuale = presentiOggi[Math.floor(Math.random() * presentiOggi.length)];
+          vincitore.innerText = casuale;
+          conteggio++;
+          if (conteggio > 20) {
+            clearInterval(intervallo);
+            const vincitoreFinale = presentiOggi[Math.floor(Math.random() * presentiOggi.length)];
+            vincitore.innerText = "🏆 " + vincitoreFinale;
+            status.innerText = "✅ Estratto da " + presentiOggi.length + " presenze!";
+            
+            // Salva il vincitore su Google Sheets
+            fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({nomeVincitore: vincitoreFinale}) })
+            .then(() => {
+              status.innerText += " (Salvato!)";
+            });
+          }
+        }, 100);
+      } catch (error) { status.innerText = "❌ Errore: " + error.message; }
+    }
+
+    async function archiviaGiornata() {
+      const status = document.getElementById('status');
+      if (!confirm("Sei sicuro di voler archiviare la giornata? Le presenze verranno spostate nello storico.")) return;
+      
+      status.innerText = "🗄️ Archiviazione in corso...";
+      
+      try {
+        const response = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({action: "archivia"}) });
+        const data = await response.json();
+        
+        if (data.status === "successo") {
+          status.innerText = "✅ Archiviate " + data.count + " presenze!";
+          presentiOggi = [];
+          caricaLista(); // Ricarica la lista (ora vuota)
+        } else {
+          status.innerText = "❌ Errore archiviazione";
+        }
+      } catch (error) {
+        status.innerText = "❌ Errore di rete";
+      }
+    }
+
+    window.onload = caricaLista;
+  </script>
 </body>
 </html>
