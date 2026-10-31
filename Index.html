@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin NFC</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 30px; background: #2c3e50; color: white; }
+    button { background: #e74c3c; color: white; padding: 20px 40px; font-size: 20px; border: none; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 20px;}
+    #status { margin-top: 25px; font-size: 18px; color: #ecf0f1; }
+  </style>
+</head>
+<body>
+  <h1>🛡️ Pannello Admin</h1>
+  <p>Usa questa app per registrare le presenze</p>
+  <button onclick="startScan()">LEGGI SOLO IL NOME</button>
+  <p id="status">In attesa...</p>
+
+  <script>
+    // ⚠️ INCOLLA QUI IL TUO URL DI GOOGLE APPS SCRIPT ⚠️
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfCassJIX9Tw6ms5OAXL27U00pD71q4k4BjJSjXT3-tStmGbY2y3jGfOJo3rNAycyJsA/exec";
+
+    async function startScan() {
+      const status = document.getElementById('status');
+      if (!("NDEFReader" in window)) {
+        status.innerText = "❌ Usa Chrome su Android!"; return;
+      }
+      try {
+        status.innerText = "🔍 Avvicina la card...";
+        const ndef = new NDEFReader();
+        await ndef.scan();
+        
+        ndef.onreading = event => {
+          const textDecoder = new TextDecoder();
+          let nomeTrovato = null;
+
+          // IL TRUCCO: Cicliamo su tutti i record della card
+          for (const record of event.message.records) {
+            // Ignoriamo l'URL (recordType "url") e cerchiamo solo il testo
+            if (record.recordType === "text") {
+              nomeTrovato = textDecoder.decode(record.data);
+            }
+          }
+
+          if (nomeTrovato) {
+            status.innerText = "✅ Letto: " + nomeTrovato;
+            inviaAlFoglio(nomeTrovato);
+          } else {
+            status.innerText = "⚠️ Nessun nome trovato sulla card!";
+          }
+        };
+      } catch (error) {
+        status.innerText = "❌ Errore: " + error.message;
+      }
+    }
+
+    function inviaAlFoglio(testo) {
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ testoLetto: testo })
+      }).then(() => {
+        document.getElementById('status').innerText += " (Salvato!)";
+      });
+    }
+  </script>
+</body>
+</html>
