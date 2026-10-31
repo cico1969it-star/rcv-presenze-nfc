@@ -53,17 +53,14 @@
         status.innerText = "❌ Usa Chrome su Android!"; return;
       }
       try {
-        scanController = new AbortController(); // Crea il "telecomando" di stop
+        scanController = new AbortController();
         ndefReader = new NDEFReader();
-        
-        // Avvia la scansione passando il segnale di stop
-        await ndefReader.scan({ signal: scanController.signal }); 
-        
-        document.getElementById('startBtn').style.display = 'none';
-        document.getElementById('stopBtn').style.display = 'block';
-        status.innerHTML = '<span class="listening">🟢 IN ASCOLTO... Avvicina la card</span>';
 
+        // 1. PRIMA diciamo al browser cosa fare quando legge una card
         ndefReader.onreading = event => {
+          // Sicurezza: se nel frattempo abbiamo premuto stop, ignora la lettura
+          if (!scanController || scanController.signal.aborted) return;
+
           const textDecoder = new TextDecoder();
           let nomeTrovato = null;
           for (const record of event.message.records) {
@@ -75,6 +72,18 @@
             inviaAlFoglio(nomeTrovato);
           }
         };
+
+        // Ignoriamo gli errori di lettura silenziosi per non intasare lo schermo
+        ndefReader.onreadingerror = () => {};
+
+        // 2. SOLO DOPO accendiamo l'antenna NFC
+        await ndefReader.scan({ signal: scanController.signal });
+
+        // 3. Aggiorniamo l'interfaccia
+        document.getElementById('startBtn').style.display = 'none';
+        document.getElementById('stopBtn').style.display = 'block';
+        status.innerHTML = '<span class="listening">🟢 IN ASCOLTO... Avvicina la card</span>';
+
       } catch (error) {
         status.innerText = "❌ Errore: " + error.message;
       }
