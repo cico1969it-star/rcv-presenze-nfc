@@ -101,13 +101,14 @@
         btnEstrai.disabled = true;
         btnEstrai.style.background = "#7f8c8d";
         document.getElementById('status').innerText = "🗄️ Giornata archiviata: sistema chiuso per oggi.";
-        document.getElementById('inputManuale').disabled = true;
-        document.getElementById('btnManuale').disabled = true;
-        document.getElementById('btnManuale').style.background = "#7f8c8d";
         // Disabilita e nasconde l'inserimento manuale
         document.getElementById('btnToggleManuale').disabled = true;
         document.getElementById('btnToggleManuale').style.background = "#7f8c8d";
         document.getElementById('containerManuale').style.display = 'none';
+        document.getElementById('inputManuale').disabled = true;
+        document.getElementById('btnManuale').disabled = true;
+        document.getElementById('btnManuale').style.background = "#7f8c8d";
+
         if (data.giaEstratto) {
           btnEstrai.innerText = "🏆 ESTRATTO: " + data.vincitore;
           document.getElementById('vincitore').innerText = "🏆 " + data.vincitore;
