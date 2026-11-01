@@ -33,7 +33,7 @@
   
   <div class="btn-container">
     <button id="btnEstrai" class="btn-estrai" onclick="estraiFortunato()">🎲 ESTRAI</button>
-    <button class="btn-archivia" onclick="archiviaGiornata()">🗄️ ARCHIVIA</button>
+    <button id="btnArchivia" class="btn-archivia" onclick="archiviaGiornata()">🗄️ ARCHIVIA</button>
   </div>
   
   <p id="status">In attesa...</p>
@@ -64,20 +64,40 @@
     }
 
     async function checkStatoGiornata() {
-      try {
-        const response = await fetch(SCRIPT_URL + "?action=checkEstrazione");
-        const data = await response.json();
-      
+    try {
+      const response = await fetch(SCRIPT_URL + "?action=checkStato");
+      const data = await response.json();
+
+      const btnEstrai = document.getElementById('btnEstrai');
+      const btnArchivia = document.getElementById('btnArchivia');
+      const startBtn = document.getElementById('startBtn');
+
+      if (data.giaArchiviato) {
+        // GIORNATA CHIUSA: blocca tutti i pulsanti
+        startBtn.disabled = true;
+        startBtn.style.background = "#7f8c8d";
+        btnArchivia.disabled = true;
+        btnArchivia.style.background = "#7f8c8d";
+        btnArchivia.innerText = "🗄️ GIÀ ARCHIVIATO";
+        btnEstrai.disabled = true;
+        btnEstrai.style.background = "#7f8c8d";
+        document.getElementById('status').innerText = "🗄️ Giornata archiviata: sistema chiuso per oggi.";
         if (data.giaEstratto) {
-          const btnEstrai = document.getElementById('btnEstrai');
-          btnEstrai.disabled = true;
-          btnEstrai.style.background = "#7f8c8d";
           btnEstrai.innerText = "🏆 ESTRATTO: " + data.vincitore;
           document.getElementById('vincitore').innerText = "🏆 " + data.vincitore;
-          document.getElementById('status').innerText = "Estrazione già effettuata oggi.";
         }
-      } catch (error) { console.error("Errore controllo stato", error); }
-    }
+        return;
+      }
+
+      if (data.giaEstratto) {
+        btnEstrai.disabled = true;
+        btnEstrai.style.background = "#7f8c8d";
+        btnEstrai.innerText = "🏆 ESTRATTO: " + data.vincitore;
+        document.getElementById('vincitore').innerText = "🏆 " + data.vincitore;
+        document.getElementById('status').innerText = "Estrazione già effettuata oggi.";
+      }
+    } catch (error) { console.error("Errore controllo stato", error); }
+  }
     
     async function caricaLista() {
       const listaEl = document.getElementById('lista-presenze');
@@ -159,6 +179,9 @@
         if (data.status === "duplicato") {
           status.innerText = "⚠️ Già presente: " + testo;
           navigator.vibrate([100, 50, 100]); playBeep(true);
+        } else if (data.status === "archiviato") {
+          status.innerText = "⚠️ Giornata già archiviata!";
+          navigator.vibrate([100, 50, 100]); playBeep(true);
         } else {
           status.innerText = "✅ Registrato: " + testo;
           playBeep(false);
@@ -223,7 +246,11 @@
         if (data.status === "successo") {
           status.innerText = "✅ Archiviate " + data.count + " presenze!";
           presentiOggi = [];
-          caricaLista(); // Ricarica la lista (ora vuota)
+          caricaLista();
+          checkStatoGiornata(); // Chiude i pulsanti
+        } else if (data.status === "gia_archiviato") {
+          status.innerText = "⚠️ Giornata già archiviata!";
+          checkStatoGiornata();
         } else {
           status.innerText = "❌ Errore archiviazione";
         }
