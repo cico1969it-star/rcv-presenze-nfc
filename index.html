@@ -227,7 +227,7 @@
 
   <hr>
   <h3>PRESENTI OGGI (<span id="conteggio">0</span>)</h3>
-  <button class="btn-aggiorna" onclick="caricaLista()">AGGIORNA ELENCO</button>
+  <button id="btnAggiorna" class="btn-aggiorna" onclick="caricaLista()">AGGIORNA ELENCO</button>
   <ul id="lista-presenze"></ul>
 
   <script>
@@ -454,29 +454,36 @@
         const btnArchivia = document.getElementById('btnArchivia');
         const startBtn = document.getElementById('startBtn');
         const btnToggleManuale = document.getElementById('btnToggleManuale');
+        const btnAggiorna = document.getElementById('btnAggiorna');
         const containerManuale = document.getElementById('containerManuale');
 
         if (data.giaArchiviato) {
+          // GIORNATA CHIUSA: blocca TUTTI i pulsanti (senza cambiare il testo)
           startBtn.disabled = true; startBtn.style.background = "#7f8c8d";
-          btnArchivia.disabled = true; btnArchivia.style.background = "#7f8c8d"; btnArchivia.innerText = "🗄️ GIÀ ARCHIVIATO";
+          btnArchivia.disabled = true; btnArchivia.style.background = "#7f8c8d";
           btnEstrai.disabled = true; btnEstrai.style.background = "#7f8c8d";
-          btnToggleManuale.disabled = true; btnToggleManuale.style.background = "#7f8c8d"; btnToggleManuale.innerText = "✍️ NON DISPONIBILE";
+          btnAggiorna.disabled = true; btnAggiorna.style.background = "#7f8c8d";
+          btnToggleManuale.disabled = true; btnToggleManuale.style.background = "#7f8c8d"; btnToggleManuale.innerText = "NON DISPONIBILE";
           containerManuale.style.display = 'none';
-          document.getElementById('status').innerText = "🗄️ Giornata archiviata: sistema chiuso.";
+          document.getElementById('status').innerText = "Giornata archiviata: sistema chiuso.";
           
           if (data.giaEstratto) {
             estrazioneFattaOggi = true;
-            btnEstrai.innerText = "🏆 ESTRATTO: " + data.vincitore;
-            document.getElementById('vincitore').innerText = "🏆 " + data.vincitore;
+            document.getElementById('vincitore').innerText = data.vincitore;
           }
+          
+          // Mostra "GIORNATA CHIUSA" nell'elenco
+          const listaEl = document.getElementById('lista-presenze');
+          listaEl.innerHTML = '<li style="text-align:center; font-style: italic;">GIORNATA CHIUSA</li>';
+          document.getElementById('conteggio').innerText = "0";
+          
           return;
         }
 
         if (data.giaEstratto) {
           estrazioneFattaOggi = true;
           btnEstrai.disabled = true; btnEstrai.style.background = "#7f8c8d";
-          btnEstrai.innerText = "🏆 ESTRATTO: " + data.vincitore;
-          document.getElementById('vincitore').innerText = "🏆 " + data.vincitore;
+          document.getElementById('vincitore').innerText = data.vincitore;
           document.getElementById('status').innerText = "Estrazione già effettuata oggi.";
         }
       } catch (error) { console.error("Errore controllo stato", error); }
