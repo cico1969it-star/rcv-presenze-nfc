@@ -90,7 +90,7 @@
       width: 100%; 
       margin-top: 10px; 
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 1.5px;
       transition: all 0.3s ease;
     }
     
@@ -115,6 +115,7 @@
       color: var(--grigio-roma); 
       min-height: 30px; 
       font-weight: 600;
+      letter-spacing: 0.5px;
     }
     
     #vincitore { 
@@ -124,6 +125,7 @@
       font-weight: 700; 
       min-height: 40px;
       text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      letter-spacing: 1px;
     }
     
     .listening { 
@@ -152,6 +154,14 @@
       font-weight: 700;
     }
     
+    #lista-presenze { 
+      list-style: none; 
+      padding: 0; 
+      text-align: left; 
+      max-width: 400px; 
+      margin: 0 auto; 
+    }
+    
     #lista-presenze li { 
       background: var(--grigio-roma); 
       color: var(--blu-roma);
@@ -161,6 +171,7 @@
       border-left: 5px solid var(--giallo-roma); 
       font-size: 20px;
       font-weight: 600;
+      letter-spacing: 1px;
     }
     
     .btn-container { 
@@ -196,8 +207,8 @@
 
   <div id="containerManuale" style="display: none; margin-top: 10px;">
     <div style="display: flex; gap: 10px;">
-      <input type="text" id="inputManuale" placeholder="Nome e Cognome Socio" 
-             style="flex: 1; padding: 12px; border-radius: 8px; border: none; font-size: 18px; color: var(--blu-roma); background: var(--bianco);"
+      <input type="text" id="inputManuale" placeholder="Nome Cognome" 
+             style="flex: 1; padding: 12px; border-radius: 8px; border: none; font-size: 18px; color: var(--blu-roma); background: var(--bianco); letter-spacing: 0.5px;"
              onkeydown="if(event.key === 'Enter') registrazioneManuale()">
       <button id="btnSalvaManuale" onclick="registrazioneManuale()" 
               style="width: auto; padding: 12px 24px; background: var(--giallo-roma); color: var(--blu-roma); margin-top: 0; font-size: 18px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600;">
@@ -215,7 +226,7 @@
   <p id="vincitore"></p>
 
   <hr>
-  <h3>📋 PRESENTI OGGI (<span id="conteggio">0</span>)</h3>
+  <h3>PRESENTI OGGI (<span id="conteggio">0</span>)</h3>
   <button class="btn-aggiorna" onclick="caricaLista()">AGGIORNA ELENCO</button>
   <ul id="lista-presenze"></ul>
 
