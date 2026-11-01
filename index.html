@@ -31,6 +31,14 @@
   <button id="startBtn" class="btn-scan" onclick="startScan()">📡 AVVIA SCANSIONE</button>
   <button id="stopBtn" class="btn-stop" onclick="stopScan()" style="display:none;">⏹️ FERMA SCANSIONE</button>
   
+  <div style="display: flex; gap: 10px; margin-top: 10px;">
+    <input type="text" id="inputManuale" placeholder="✍️ Inserimento Manuale" 
+           style="flex: 1; padding: 12px; border-radius: 8px; border: none; font-size: 16px; color: #2c3e50;"
+           onkeydown="if(event.key === 'Enter') registrazioneManuale()">
+    <button id="btnManuale" onclick="registrazioneManuale()" 
+            style="width: auto; padding: 12px 18px; background: #16a085; color: white; margin-top: 0; font-size: 18px;">➕</button>
+  </div>
+  
   <div class="btn-container">
     <button id="btnEstrai" class="btn-estrai" onclick="estraiFortunato()">🎲 ESTRAI</button>
     <button id="btnArchivia" class="btn-archivia" onclick="archiviaGiornata()">🗄️ ARCHIVIA</button>
@@ -82,6 +90,9 @@
         btnEstrai.disabled = true;
         btnEstrai.style.background = "#7f8c8d";
         document.getElementById('status').innerText = "🗄️ Giornata archiviata: sistema chiuso per oggi.";
+        document.getElementById('inputManuale').disabled = true;
+        document.getElementById('btnManuale').disabled = true;
+        document.getElementById('btnManuale').style.background = "#7f8c8d";
         if (data.giaEstratto) {
           btnEstrai.innerText = "🏆 ESTRATTO: " + data.vincitore;
           document.getElementById('vincitore').innerText = "🏆 " + data.vincitore;
@@ -170,7 +181,23 @@
       document.getElementById('status').innerText = "⏸️ Scansione fermata.";
     }
 
+    function registrazioneManuale() {
+      const input = document.getElementById('inputManuale');
+      const nome = input.value.trim();
+      if (!nome) {
+        document.getElementById('status').innerText = "⚠️ Scrivi prima il nome del socio!";
+        return;
+      }
+      inviaAlFoglio(nome); // Usa lo stesso canale della lettura NFC (con tutti i controlli!)
+      input.value = "";
+    }
+    
+    function normalizzaNome(testo) {
+      return testo.toString().replace(/\s+/g, ' ').trim().toUpperCase();
+    }
+    
     function inviaAlFoglio(testo) {
+      testo = normalizzaNome(testo); // Spazi puliti + TUTTO MAIUSCOLO
       const status = document.getElementById('status');
       navigator.vibrate(100); 
       fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({testoLetto: testo}) })
