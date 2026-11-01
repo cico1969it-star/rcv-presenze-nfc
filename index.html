@@ -32,7 +32,7 @@
   <button id="stopBtn" class="btn-stop" onclick="stopScan()" style="display:none;">⏹️ FERMA SCANSIONE</button>
   
   <div class="btn-container">
-    <button class="btn-estrai" onclick="estraiFortunato()">🎲 ESTRAI</button>
+    <button id="btnEstrai" class="btn-estrai" onclick="estraiFortunato()">🎲 ESTRAI</button>
     <button class="btn-archivia" onclick="archiviaGiornata()">🗄️ ARCHIVIA</button>
   </div>
   
@@ -63,6 +63,22 @@
       setTimeout(() => osc.stop(), 150);
     }
 
+    async function checkStatoGiornata() {
+      try {
+        const response = await fetch(SCRIPT_URL + "?action=checkEstrazione");
+        const data = await response.json();
+      
+        if (data.giaEstratto) {
+          const btnEstrai = document.getElementById('btnEstrai');
+          btnEstrai.disabled = true;
+          btnEstrai.style.background = "#7f8c8d";
+          btnEstrai.innerText = "🏆 ESTRATTO: " + data.vincitore;
+          document.getElementById('vincitore').innerText = "🏆 " + data.vincitore;
+          document.getElementById('status').innerText = "Estrazione già effettuata oggi.";
+        }
+      } catch (error) { console.error("Errore controllo stato", error); }
+    }
+    
     async function caricaLista() {
       const listaEl = document.getElementById('lista-presenze');
       const conteggioEl = document.getElementById('conteggio');
@@ -178,8 +194,16 @@
             
             // Salva il vincitore su Google Sheets
             fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({nomeVincitore: vincitoreFinale}) })
-            .then(() => {
-              status.innerText += " (Salvato!)";
+            .then(response => response.json())
+            .then(data => {
+              if (data.status === "duplicato") {
+                status.innerText = "⚠️ Estrazione già fatta oggi!";
+                document.getElementById('btnEstrai').disabled = true;
+                checkStatoGiornata(); // Aggiorna la UI
+              } else {
+                status.innerText += " (Salvato!)";
+                document.getElementById('btnEstrai').disabled = true;
+              }
             });
           }
         }, 100);
@@ -208,7 +232,10 @@
       }
     }
 
-    window.onload = caricaLista;
+    window.onload = function() {
+      caricaLista();
+      checkStatoGiornata();
+    };
   </script>
 </body>
 </html>
