@@ -82,7 +82,7 @@
       setTimeout(() => osc.stop(), 150);
     }
 
-    async function checkStatoGiornata() {
+  async function checkStatoGiornata() {
     try {
       const response = await fetch(SCRIPT_URL + "?action=checkStato");
       const data = await response.json();
@@ -90,25 +90,29 @@
       const btnEstrai = document.getElementById('btnEstrai');
       const btnArchivia = document.getElementById('btnArchivia');
       const startBtn = document.getElementById('startBtn');
+      const btnToggleManuale = document.getElementById('btnToggleManuale');
+      const containerManuale = document.getElementById('containerManuale');
 
       if (data.giaArchiviato) {
-        // GIORNATA CHIUSA: blocca tutti i pulsanti
+        // 🗄️ GIORNATA CHIUSA: blocca TUTTI i pulsanti
         startBtn.disabled = true;
         startBtn.style.background = "#7f8c8d";
+        
         btnArchivia.disabled = true;
         btnArchivia.style.background = "#7f8c8d";
         btnArchivia.innerText = "🗄️ GIÀ ARCHIVIATO";
+        
         btnEstrai.disabled = true;
         btnEstrai.style.background = "#7f8c8d";
+        
+        btnToggleManuale.disabled = true;
+        btnToggleManuale.style.background = "#7f8c8d";
+        btnToggleManuale.innerText = "✍️ INSERIMENTO NON DISPONIBILE";
+        
+        containerManuale.style.display = 'none';
+        
         document.getElementById('status').innerText = "🗄️ Giornata archiviata: sistema chiuso per oggi.";
-        // Disabilita e nasconde l'inserimento manuale
-        document.getElementById('btnToggleManuale').disabled = true;
-        document.getElementById('btnToggleManuale').style.background = "#7f8c8d";
-        document.getElementById('containerManuale').style.display = 'none';
-        document.getElementById('inputManuale').disabled = true;
-        document.getElementById('btnManuale').disabled = true;
-        document.getElementById('btnManuale').style.background = "#7f8c8d";
-
+        
         if (data.giaEstratto) {
           btnEstrai.innerText = "🏆 ESTRATTO: " + data.vincitore;
           document.getElementById('vincitore').innerText = "🏆 " + data.vincitore;
@@ -116,6 +120,7 @@
         return;
       }
 
+      // Se la giornata NON è archiviata, controlliamo solo l'estrazione
       if (data.giaEstratto) {
         btnEstrai.disabled = true;
         btnEstrai.style.background = "#7f8c8d";
@@ -123,7 +128,9 @@
         document.getElementById('vincitore').innerText = "🏆 " + data.vincitore;
         document.getElementById('status').innerText = "Estrazione già effettuata oggi.";
       }
-    } catch (error) { console.error("Errore controllo stato", error); }
+    } catch (error) { 
+      console.error("Errore controllo stato", error); 
+    }
   }
     
     async function caricaLista() {
