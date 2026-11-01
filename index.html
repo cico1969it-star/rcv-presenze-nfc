@@ -1,50 +1,176 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin NFC</title>
+  <title>Admin NFC - Roma</title>
+  
+  <!-- Google Fonts: Barlow Condensed per i testi -->
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font di fallback "rough" per il titolo (da sostituire con SLIMEDUNK_ITALIC_ROUGH) -->
+  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
+  
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 20px; background: #2c3e50; color: white; margin: 0; }
-    h1 { font-size: 24px; margin-bottom: 20px; }
-    button { padding: 15px 25px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; }
-    .btn-scan { background: #27ae60; color: white; }
-    .btn-stop { background: #c0392b; color: white; }
-    .btn-estrai { background: #f39c12; color: white; }
-    .btn-archivia { background: #9b59b6; color: white; }
-    .btn-aggiorna { background: #3498db; color: white; padding: 10px 20px; font-size: 14px; }
-    #status { margin-top: 20px; font-size: 20px; color: #ecf0f1; min-height: 30px; }
-    #vincitore { margin-top: 20px; font-size: 28px; color: #2ecc71; font-weight: bold; min-height: 40px; }
-    .listening { color: #2ecc71; font-weight: bold; animation: pulse 1.5s infinite; }
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-    hr { border-color: #7f8c8d; margin: 25px 0; }
-    h3 { margin: 15px 0 10px 0; font-size: 20px; }
-    #lista-presenze { list-style: none; padding: 0; text-align: left; max-width: 400px; margin: 0 auto; }
-    #lista-presenze li { background: #34495e; padding: 12px; margin: 8px 0; border-radius: 8px; border-left: 5px solid #2ecc71; font-size: 18px; }
-    .btn-container { display: flex; gap: 10px; }
-    .btn-container button { flex: 1; }
+    :root {
+      --rosso-roma: #8e001c;
+      --giallo-roma: #ffb300;
+      --blu-roma: #051844;
+      --grigio-roma: #e6e6e6;
+      --bianco: #ffffff;
+      --nero: #000000;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body { 
+      font-family: 'Barlow Condensed', sans-serif; 
+      text-align: center; 
+      padding: 20px; 
+      background: var(--blu-roma); 
+      color: var(--bianco); 
+      min-height: 100vh;
+    }
+    
+    .logo-container { margin-bottom: 15px; }
+    .logo-container img { max-width: 180px; height: auto; }
+    
+    h1 { 
+      font-family: 'Permanent Marker', cursive; /* Da sostituire con SLIMEDUNK_ITALIC_ROUGH */
+      font-size: 32px; 
+      margin-bottom: 25px; 
+      color: var(--giallo-roma);
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    button { 
+      padding: 15px 25px; 
+      font-size: 16px; 
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      border: none; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      width: 100%; 
+      margin-top: 10px; 
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+    }
+    
+    button:active { transform: scale(0.98); }
+    
+    .btn-scan { background: var(--giallo-roma); color: var(--blu-roma); }
+    .btn-stop { background: var(--rosso-roma); color: var(--bianco); }
+    .btn-estrai { background: var(--giallo-roma); color: var(--blu-roma); }
+    .btn-archivia { background: var(--rosso-roma); color: var(--bianco); }
+    .btn-aggiorna { background: var(--grigio-roma); color: var(--blu-roma); padding: 10px 20px; font-size: 14px; }
+    .btn-manuale { background: #16a085; color: var(--bianco); }
+    
+    button:disabled { 
+      background: #7f8c8d !important; 
+      color: #bdc3c7 !important;
+      cursor: not-allowed;
+    }
+    
+    #status { 
+      margin-top: 20px; 
+      font-size: 20px; 
+      color: var(--grigio-roma); 
+      min-height: 30px; 
+      font-weight: 600;
+    }
+    
+    #vincitore { 
+      margin-top: 20px; 
+      font-size: 32px; 
+      color: var(--giallo-roma); 
+      font-weight: 700; 
+      min-height: 40px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .listening { 
+      color: var(--giallo-roma); 
+      font-weight: 700; 
+      animation: pulse 1.5s infinite; 
+    }
+    
+    @keyframes pulse { 
+      0% { opacity: 1; } 
+      50% { opacity: 0.5; } 
+      100% { opacity: 1; } 
+    }
+    
+    hr { 
+      border: none;
+      border-top: 2px solid var(--giallo-roma); 
+      margin: 25px 0; 
+      opacity: 0.3;
+    }
+    
+    h3 { 
+      margin: 15px 0 10px 0; 
+      font-size: 22px; 
+      color: var(--giallo-roma);
+      font-weight: 700;
+    }
+    
+    #lista-presenze { 
+      list-style: none; 
+      padding: 0; 
+      text-align: left; 
+      max-width: 400px; 
+      margin: 0 auto; 
+    }
+    
+    #lista-presenze li { 
+      background: var(--grigio-roma); 
+      color: var(--blu-roma);
+      padding: 12px; 
+      margin: 8px 0; 
+      border-radius: 8px; 
+      border-left: 5px solid var(--giallo-roma); 
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .btn-container { 
+      display: flex; 
+      gap: 10px; 
+    }
+    
+    .btn-container button { 
+      flex: 1; 
+    }
+    
+    input[type="text"] {
+      font-family: 'Barlow Condensed', sans-serif;
+    }
   </style>
 </head>
 <body>
-  <h1>🛡️ Pannello Admin NFC</h1>
+  
+  <div class="logo-container">
+    <img src="rcv-logo.png" alt="Logo">
+  </div>
+  
+  <h1>PANNELLO ADMIN NFC</h1>
   
   <button id="startBtn" class="btn-scan" onclick="startScan()">📡 AVVIA SCANSIONE</button>
   <button id="stopBtn" class="btn-stop" onclick="stopScan()" style="display:none;">⏹️ FERMA SCANSIONE</button>
   
-  <!-- NUOVO PULSANTE PER APRIRE L'INSERIMENTO MANUALE -->
-  <button id="btnToggleManuale" onclick="toggleInserimentoManuale()" 
-          style="width: 100%; margin-top: 10px; background: #16a085; color: white; padding: 15px 25px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+  <button id="btnToggleManuale" onclick="toggleInserimentoManuale()" class="btn-manuale">
     ✍️ INSERIMENTO MANUALE
   </button>
 
-  <!-- CONTENITORE NASCOSTO (Appare solo quando clicchi il pulsante sopra) -->
   <div id="containerManuale" style="display: none; margin-top: 10px;">
     <div style="display: flex; gap: 10px;">
-      <input type="text" id="inputManuale" placeholder="Nome Cognome" 
-             style="flex: 1; padding: 12px; border-radius: 8px; border: none; font-size: 16px; color: #2c3e50;"
+      <input type="text" id="inputManuale" placeholder="Nome e Cognome Socio" 
+             style="flex: 1; padding: 12px; border-radius: 8px; border: none; font-size: 16px; color: var(--blu-roma); background: var(--bianco);"
              onkeydown="if(event.key === 'Enter') registrazioneManuale()">
       <button id="btnSalvaManuale" onclick="registrazioneManuale()" 
-              style="width: auto; padding: 12px 18px; background: #27ae60; color: white; margin-top: 0; font-size: 18px; border-radius: 8px; border: none; cursor: pointer;">
+              style="width: auto; padding: 12px 18px; background: var(--giallo-roma); color: var(--blu-roma); margin-top: 0; font-size: 18px; border-radius: 8px; border: none; cursor: pointer;">
         ➕
       </button>
     </div>
@@ -59,19 +185,22 @@
   <p id="vincitore"></p>
 
   <hr>
-  <h3>📋 Presenti Oggi (<span id="conteggio">0</span>)</h3>
-  <button class="btn-aggiorna" onclick="caricaLista()">🔄 Aggiorna Elenco</button>
+  <h3>📋 PRESENTI OGGI (<span id="conteggio">0</span>)</h3>
+  <button class="btn-aggiorna" onclick="caricaLista()">🔄 AGGIORNA ELENCO</button>
   <ul id="lista-presenze"></ul>
 
   <script>
-    // ⚠️ INCOLLA QUI IL TUO URL DI GOOGLE APPS SCRIPT ⚠️
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMeHxt1EXJ3tfwRJ_m4Tl6hkaYajAI7yJplV4r-Fw4wPx3_nKC5Q9O1t4Lry_WvF3Pxg/exec";
+    const SCRIPT_URL = "IL_TUO_URL_APPS_SCRIPT_QUI";
 
     let isScanning = false;
     let hardwareStarted = false;
     let ndefReader = null;
     let presentiOggi = [];
-    let estrazioneFattaOggi = false; // Tiene a mente se abbiamo già estratto
+    let estrazioneFattaOggi = false;
+
+    function normalizzaNome(testo) {
+      return testo.toString().replace(/\s+/g, ' ').trim().toUpperCase();
+    }
 
     function playBeep(duplicato) {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -83,47 +212,10 @@
       setTimeout(() => osc.stop(), 150);
     }
 
-  async function checkStatoGiornata() {
-    try {
-      const response = await fetch(SCRIPT_URL + "?action=checkStato");
-      const data = await response.json();
-
-      const btnEstrai = document.getElementById('btnEstrai');
-      const btnArchivia = document.getElementById('btnArchivia');
-      const startBtn = document.getElementById('startBtn');
-      const btnToggleManuale = document.getElementById('btnToggleManuale');
-      const containerManuale = document.getElementById('containerManuale');
-
-      if (data.giaArchiviato) {
-        startBtn.disabled = true; startBtn.style.background = "#7f8c8d";
-        btnArchivia.disabled = true; btnArchivia.style.background = "#7f8c8d"; btnArchivia.innerText = "🗄️ GIÀ ARCHIVIATO";
-        btnEstrai.disabled = true; btnEstrai.style.background = "#7f8c8d";
-        btnToggleManuale.disabled = true; btnToggleManuale.style.background = "#7f8c8d"; btnToggleManuale.innerText = "✍️ NON DISPONIBILE";
-        containerManuale.style.display = 'none';
-        document.getElementById('status').innerText = "🗄️ Giornata archiviata: sistema chiuso.";
-        
-        if (data.giaEstratto) {
-          estrazioneFattaOggi = true; // Aggiorna la memoria
-          btnEstrai.innerText = "🏆 ESTRATTO: " + data.vincitore;
-          document.getElementById('vincitore').innerText = "🏆 " + data.vincitore;
-        }
-        return;
-      }
-
-      if (data.giaEstratto) {
-        estrazioneFattaOggi = true; // Aggiorna la memoria
-        btnEstrai.disabled = true; btnEstrai.style.background = "#7f8c8d";
-        btnEstrai.innerText = "🏆 ESTRATTO: " + data.vincitore;
-        document.getElementById('vincitore').innerText = "🏆 " + data.vincitore;
-        document.getElementById('status').innerText = "Estrazione già effettuata oggi.";
-      }
-    } catch (error) { console.error("Errore controllo stato", error); }
-  }
-    
     async function caricaLista() {
       const listaEl = document.getElementById('lista-presenze');
       const conteggioEl = document.getElementById('conteggio');
-      listaEl.innerHTML = '<li style="text-align:center; color:#bdc3c7;">Caricamento...</li>';
+      listaEl.innerHTML = '<li style="text-align:center;">Caricamento...</li>';
       
       try {
         const response = await fetch(SCRIPT_URL);
@@ -132,7 +224,7 @@
         
         listaEl.innerHTML = '';
         if (presentiOggi.length === 0) {
-          listaEl.innerHTML = '<li style="text-align:center; color:#bdc3c7;">Nessuna presenza oggi.</li>';
+          listaEl.innerHTML = '<li style="text-align:center;">Nessuna presenza oggi.</li>';
         } else {
           presentiOggi.slice().reverse().forEach(nome => {
             const li = document.createElement('li');
@@ -190,39 +282,31 @@
       document.getElementById('stopBtn').style.display = 'none';
       document.getElementById('status').innerText = "⏸️ Scansione fermata.";
     }
-    
+
     function toggleInserimentoManuale() {
       const container = document.getElementById('containerManuale');
-      // Se è nascosto, lo mostra e mette il cursore nel campo
       if (container.style.display === 'none' || container.style.display === '') {
         container.style.display = 'block';
         setTimeout(() => document.getElementById('inputManuale').focus(), 100);
       } else {
-        // Se è visibile, lo nasconde
         container.style.display = 'none';
       }
     }
-    
-  function registrazioneManuale() {
-    const input = document.getElementById('inputManuale');
-    const nome = input.value.trim();
-    if (!nome) {
-      document.getElementById('status').innerText = "⚠️ Scrivi prima il nome del socio!";
-      return;
+
+    function registrazioneManuale() {
+      const input = document.getElementById('inputManuale');
+      const nome = input.value.trim();
+      if (!nome) {
+        document.getElementById('status').innerText = "⚠️ Scrivi prima il nome del socio!";
+        return;
+      }
+      inviaAlFoglio(nome); 
+      input.value = "";
+      document.getElementById('containerManuale').style.display = 'none'; 
     }
-    inviaAlFoglio(nome); 
-    input.value = ""; // Pulisce il campo
-    
-    // Nasconde di nuovo il contenitore dopo il salvataggio
-    document.getElementById('containerManuale').style.display = 'none'; 
-  }
-    
-    function normalizzaNome(testo) {
-      return testo.toString().replace(/\s+/g, ' ').trim().toUpperCase();
-    }
-    
+
     function inviaAlFoglio(testo) {
-      testo = normalizzaNome(testo); // Spazi puliti + TUTTO MAIUSCOLO
+      testo = normalizzaNome(testo);
       const status = document.getElementById('status');
       navigator.vibrate(100); 
       fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({testoLetto: testo}) })
@@ -267,7 +351,6 @@
             vincitore.innerText = "🏆 " + vincitoreFinale;
             status.innerText = "✅ Estratto da " + presentiOggi.length + " presenze!";
             
-            // Salva il vincitore su Google Sheets
             fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({nomeVincitore: vincitoreFinale}) })
             .then(response => response.json())
             .then(data => {
@@ -278,7 +361,7 @@
               } else {
                 status.innerText += " (Salvato!)";
                 document.getElementById('btnEstrai').disabled = true;
-                estrazioneFattaOggi = true; // <--- AGGIUNGI QUESTA RIGA
+                estrazioneFattaOggi = true;
               }
             });
           }
@@ -289,13 +372,11 @@
     async function archiviaGiornata() {
       const status = document.getElementById('status');
 
-      // Avvisa SOLO se l'estrazione NON è stata fatta
       if (!estrazioneFattaOggi) {
         if (!confirm("⚠️ ATTENZIONE: L'estrazione NON è stata effettuata oggi!\n\nVuoi archiviare comunque la giornata?")) {
-          return; // L'utente ha premuto Annulla, si ferma qui
+          return;
         }
       } else {
-        // Conferma semplice e veloce se l'estrazione è stata fatta
         if (!confirm("Vuoi archiviare la giornata?")) {
           return;
         }
@@ -321,6 +402,43 @@
       } catch (error) {
         status.innerText = "❌ Errore di rete";
       }
+    }
+
+    async function checkStatoGiornata() {
+      try {
+        const response = await fetch(SCRIPT_URL + "?action=checkStato");
+        const data = await response.json();
+
+        const btnEstrai = document.getElementById('btnEstrai');
+        const btnArchivia = document.getElementById('btnArchivia');
+        const startBtn = document.getElementById('startBtn');
+        const btnToggleManuale = document.getElementById('btnToggleManuale');
+        const containerManuale = document.getElementById('containerManuale');
+
+        if (data.giaArchiviato) {
+          startBtn.disabled = true; startBtn.style.background = "#7f8c8d";
+          btnArchivia.disabled = true; btnArchivia.style.background = "#7f8c8d"; btnArchivia.innerText = "🗄️ GIÀ ARCHIVIATO";
+          btnEstrai.disabled = true; btnEstrai.style.background = "#7f8c8d";
+          btnToggleManuale.disabled = true; btnToggleManuale.style.background = "#7f8c8d"; btnToggleManuale.innerText = "✍️ NON DISPONIBILE";
+          containerManuale.style.display = 'none';
+          document.getElementById('status').innerText = "🗄️ Giornata archiviata: sistema chiuso.";
+          
+          if (data.giaEstratto) {
+            estrazioneFattaOggi = true;
+            btnEstrai.innerText = "🏆 ESTRATTO: " + data.vincitore;
+            document.getElementById('vincitore').innerText = "🏆 " + data.vincitore;
+          }
+          return;
+        }
+
+        if (data.giaEstratto) {
+          estrazioneFattaOggi = true;
+          btnEstrai.disabled = true; btnEstrai.style.background = "#7f8c8d";
+          btnEstrai.innerText = "🏆 ESTRATTO: " + data.vincitore;
+          document.getElementById('vincitore').innerText = "🏆 " + data.vincitore;
+          document.getElementById('status').innerText = "Estrazione già effettuata oggi.";
+        }
+      } catch (error) { console.error("Errore controllo stato", error); }
     }
 
     window.onload = function() {
