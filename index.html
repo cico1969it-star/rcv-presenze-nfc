@@ -463,13 +463,13 @@
           btnArchivia.disabled = true; btnArchivia.style.background = "#7f8c8d";
           btnEstrai.disabled = true; btnEstrai.style.background = "#7f8c8d";
           btnAggiorna.disabled = true; btnAggiorna.style.background = "#7f8c8d";
-          btnToggleManuale.disabled = true; btnToggleManuale.style.background = "#7f8c8d"; btnToggleManuale.innerText = "NON DISPONIBILE";
+          btnToggleManuale.disabled = true; btnToggleManuale.style.background = "#7f8c8d"; btnToggleManuale.innerText = "INSERIMENTO MANUALE";
           containerManuale.style.display = 'none';
-          document.getElementById('status').innerText = "Giornata archiviata: sistema chiuso.";
+          document.getElementById('status').innerText = "🗄️ GIORNATA ARCHIVIATA!";
           
           if (data.giaEstratto) {
             estrazioneFattaOggi = true;
-            document.getElementById('vincitore').innerText = data.vincitore;
+            document.getElementById('vincitore').innerText = "🏆 " + data.vincitore;
           }
           
           // Mostra "GIORNATA CHIUSA" nell'elenco
