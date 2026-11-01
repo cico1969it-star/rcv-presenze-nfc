@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin NFC - Roma</title>
+  <title>RCV Presenze</title>
   
   <!-- Google Fonts: Barlow Condensed per i testi -->
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
@@ -37,15 +37,45 @@
       min-height: 100vh;
     }
     
-    .logo-container { margin-bottom: 15px; }
-    .logo-container img { max-width: 180px; height: auto; }
+    /* --- HEADER COMPATTO --- */
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid var(--giallo-roma);
+    }
+    
+    .header-logo {
+      width: 60px;
+      height: auto;
+      flex-shrink: 0;
+    }
+    
+    .header-testi {
+      text-align: left;
+    }
     
     h1 { 
       font-family: 'RCV Font', cursive;
-      font-size: 32px; 
-      margin-bottom: 25px; 
+      font-size: 26px; 
+      line-height: 1.1;
+      margin: 0;
       color: var(--giallo-roma);
       text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .sottotitolo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--grigio-roma);
+      margin: 2px 0 0 0;
+      opacity: 0.8;
     }
     
     button { 
@@ -156,11 +186,13 @@
 </head>
 <body>
   
-  <div class="logo-container">
-    <img src="rcv-logo.png" alt="Logo">
-  </div>
-  
-  <h1>PANNELLO ADMIN NFC</h1>
+  <header class="app-header">
+    <img src="rcv-logo.png" alt="Logo RCV" class="header-logo">
+    <div class="header-testi">
+      <h1>ROMA CLUB VERONA</h1>
+      <p class="sottotitolo">Presenze RCV</p>
+    </div>
+  </header>
   
   <button id="startBtn" class="btn-scan" onclick="startScan()">📡 AVVIA SCANSIONE</button>
   <button id="stopBtn" class="btn-stop" onclick="stopScan()" style="display:none;">⏹️ FERMA SCANSIONE</button>
