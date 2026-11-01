@@ -71,6 +71,7 @@
     let hardwareStarted = false;
     let ndefReader = null;
     let presentiOggi = [];
+    let estrazioneFattaOggi = false; // Tiene a mente se abbiamo già estratto
 
     function playBeep(duplicato) {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -94,43 +95,29 @@
       const containerManuale = document.getElementById('containerManuale');
 
       if (data.giaArchiviato) {
-        // 🗄️ GIORNATA CHIUSA: blocca TUTTI i pulsanti
-        startBtn.disabled = true;
-        startBtn.style.background = "#7f8c8d";
-        
-        btnArchivia.disabled = true;
-        btnArchivia.style.background = "#7f8c8d";
-        btnArchivia.innerText = "🗄️ GIÀ ARCHIVIATO";
-        
-        btnEstrai.disabled = true;
-        btnEstrai.style.background = "#7f8c8d";
-        
-        btnToggleManuale.disabled = true;
-        btnToggleManuale.style.background = "#7f8c8d";
-        btnToggleManuale.innerText = "✍️ INSERIMENTO NON DISPONIBILE";
-        
+        startBtn.disabled = true; startBtn.style.background = "#7f8c8d";
+        btnArchivia.disabled = true; btnArchivia.style.background = "#7f8c8d"; btnArchivia.innerText = "🗄️ GIÀ ARCHIVIATO";
+        btnEstrai.disabled = true; btnEstrai.style.background = "#7f8c8d";
+        btnToggleManuale.disabled = true; btnToggleManuale.style.background = "#7f8c8d"; btnToggleManuale.innerText = "✍️ NON DISPONIBILE";
         containerManuale.style.display = 'none';
-        
-        document.getElementById('status').innerText = "🗄️ Giornata archiviata: sistema chiuso per oggi.";
+        document.getElementById('status').innerText = "🗄️ Giornata archiviata: sistema chiuso.";
         
         if (data.giaEstratto) {
+          estrazioneFattaOggi = true; // Aggiorna la memoria
           btnEstrai.innerText = "🏆 ESTRATTO: " + data.vincitore;
           document.getElementById('vincitore').innerText = "🏆 " + data.vincitore;
         }
         return;
       }
 
-      // Se la giornata NON è archiviata, controlliamo solo l'estrazione
       if (data.giaEstratto) {
-        btnEstrai.disabled = true;
-        btnEstrai.style.background = "#7f8c8d";
+        estrazioneFattaOggi = true; // Aggiorna la memoria
+        btnEstrai.disabled = true; btnEstrai.style.background = "#7f8c8d";
         btnEstrai.innerText = "🏆 ESTRATTO: " + data.vincitore;
         document.getElementById('vincitore').innerText = "🏆 " + data.vincitore;
         document.getElementById('status').innerText = "Estrazione già effettuata oggi.";
       }
-    } catch (error) { 
-      console.error("Errore controllo stato", error); 
-    }
+    } catch (error) { console.error("Errore controllo stato", error); }
   }
     
     async function caricaLista() {
@@ -287,10 +274,11 @@
               if (data.status === "duplicato") {
                 status.innerText = "⚠️ Estrazione già fatta oggi!";
                 document.getElementById('btnEstrai').disabled = true;
-                checkStatoGiornata(); // Aggiorna la UI
+                checkStatoGiornata(); 
               } else {
                 status.innerText += " (Salvato!)";
                 document.getElementById('btnEstrai').disabled = true;
+                estrazioneFattaOggi = true; // <--- AGGIUNGI QUESTA RIGA
               }
             });
           }
@@ -300,8 +288,19 @@
 
     async function archiviaGiornata() {
       const status = document.getElementById('status');
-      if (!confirm("Sei sicuro di voler archiviare la giornata? Le presenze verranno spostate nello storico.")) return;
-      
+
+      // Avvisa SOLO se l'estrazione NON è stata fatta
+      if (!estrazioneFattaOggi) {
+        if (!confirm("⚠️ ATTENZIONE: L'estrazione NON è stata effettuata oggi!\n\nVuoi archiviare comunque la giornata?")) {
+          return; // L'utente ha premuto Annulla, si ferma qui
+        }
+      } else {
+        // Conferma semplice e veloce se l'estrazione è stata fatta
+        if (!confirm("Vuoi archiviare la giornata?")) {
+          return;
+        }
+      }
+
       status.innerText = "🗄️ Archiviazione in corso...";
       
       try {
@@ -311,8 +310,8 @@
         if (data.status === "successo") {
           status.innerText = "✅ Archiviate " + data.count + " presenze!";
           presentiOggi = [];
-          caricaLista();
-          checkStatoGiornata(); // Chiude i pulsanti
+          caricaLista(); 
+          checkStatoGiornata(); 
         } else if (data.status === "gia_archiviato") {
           status.innerText = "⚠️ Giornata già archiviata!";
           checkStatoGiornata();
