@@ -8,10 +8,14 @@
   <!-- Google Fonts: Barlow Condensed per i testi -->
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
   
-  <!-- Font di fallback "rough" per il titolo (da sostituire con SLIMEDUNK_ITALIC_ROUGH) -->
-  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
-  
   <style>
+    @font-face {
+      font-family: 'RCV Font';
+      src: url('rcv-font.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
     :root {
       --rosso-roma: #8e001c;
       --giallo-roma: #ffb300;
@@ -36,7 +40,7 @@
     .logo-container img { max-width: 180px; height: auto; }
     
     h1 { 
-      font-family: 'Permanent Marker', cursive; /* Da sostituire con SLIMEDUNK_ITALIC_ROUGH */
+      font-family: 'RCV Font', cursive;
       font-size: 32px; 
       margin-bottom: 25px; 
       color: var(--giallo-roma);
