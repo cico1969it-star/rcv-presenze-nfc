@@ -238,6 +238,7 @@
     let ndefReader = null;
     let presentiOggi = [];
     let estrazioneFattaOggi = false;
+    let giornataArchiviataOggi = false;
 
     function normalizzaNome(testo) {
       return testo.toString().replace(/\s+/g, ' ').trim().toUpperCase();
@@ -265,7 +266,11 @@
         
         listaEl.innerHTML = '';
         if (presentiOggi.length === 0) {
-          listaEl.innerHTML = '<li style="text-align:center;">Nessuna presenza oggi.</li>';
+          if (giornataArchiviataOggi) {
+            listaEl.innerHTML = '<li style="text-align:center; font-style: italic;">GIORNATA CHIUSA</li>';
+          } else {
+            listaEl.innerHTML = '<li style="text-align:center;">Nessuna presenza oggi.</li>';
+          }
         } else {
           presentiOggi.slice().reverse().forEach(nome => {
             const li = document.createElement('li');
@@ -458,6 +463,7 @@
         const containerManuale = document.getElementById('containerManuale');
 
         if (data.giaArchiviato) {
+          giornataArchiviataOggi = true;
           // GIORNATA CHIUSA: blocca TUTTI i pulsanti (senza cambiare il testo)
           startBtn.disabled = true; startBtn.style.background = "#7f8c8d";
           btnArchivia.disabled = true; btnArchivia.style.background = "#7f8c8d";
