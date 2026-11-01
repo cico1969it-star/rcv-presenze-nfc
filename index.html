@@ -31,12 +31,23 @@
   <button id="startBtn" class="btn-scan" onclick="startScan()">📡 AVVIA SCANSIONE</button>
   <button id="stopBtn" class="btn-stop" onclick="stopScan()" style="display:none;">⏹️ FERMA SCANSIONE</button>
   
-  <div style="display: flex; gap: 10px; margin-top: 10px;">
-    <input type="text" id="inputManuale" placeholder="✍️ Inserimento Manuale" 
-           style="flex: 1; padding: 12px; border-radius: 8px; border: none; font-size: 16px; color: #2c3e50;"
-           onkeydown="if(event.key === 'Enter') registrazioneManuale()">
-    <button id="btnManuale" onclick="registrazioneManuale()" 
-            style="width: auto; padding: 12px 18px; background: #16a085; color: white; margin-top: 0; font-size: 18px;">➕</button>
+  <!-- NUOVO PULSANTE PER APRIRE L'INSERIMENTO MANUALE -->
+  <button id="btnToggleManuale" onclick="toggleInserimentoManuale()" 
+          style="width: 100%; margin-top: 10px; background: #16a085; color: white; padding: 15px 25px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+    ✍️ INSERIMENTO MANUALE
+  </button>
+
+  <!-- CONTENITORE NASCOSTO (Appare solo quando clicchi il pulsante sopra) -->
+  <div id="containerManuale" style="display: none; margin-top: 10px;">
+    <div style="display: flex; gap: 10px;">
+      <input type="text" id="inputManuale" placeholder="Nome Cognome" 
+             style="flex: 1; padding: 12px; border-radius: 8px; border: none; font-size: 16px; color: #2c3e50;"
+             onkeydown="if(event.key === 'Enter') registrazioneManuale()">
+      <button id="btnSalvaManuale" onclick="registrazioneManuale()" 
+              style="width: auto; padding: 12px 18px; background: #27ae60; color: white; margin-top: 0; font-size: 18px; border-radius: 8px; border: none; cursor: pointer;">
+        ➕
+      </button>
+    </div>
   </div>
   
   <div class="btn-container">
@@ -93,6 +104,10 @@
         document.getElementById('inputManuale').disabled = true;
         document.getElementById('btnManuale').disabled = true;
         document.getElementById('btnManuale').style.background = "#7f8c8d";
+        // Disabilita e nasconde l'inserimento manuale
+        document.getElementById('btnToggleManuale').disabled = true;
+        document.getElementById('btnToggleManuale').style.background = "#7f8c8d";
+        document.getElementById('containerManuale').style.display = 'none';
         if (data.giaEstratto) {
           btnEstrai.innerText = "🏆 ESTRATTO: " + data.vincitore;
           document.getElementById('vincitore').innerText = "🏆 " + data.vincitore;
@@ -180,17 +195,32 @@
       document.getElementById('stopBtn').style.display = 'none';
       document.getElementById('status').innerText = "⏸️ Scansione fermata.";
     }
-
-    function registrazioneManuale() {
-      const input = document.getElementById('inputManuale');
-      const nome = input.value.trim();
-      if (!nome) {
-        document.getElementById('status').innerText = "⚠️ Scrivi prima il nome del socio!";
-        return;
+    
+    function toggleInserimentoManuale() {
+      const container = document.getElementById('containerManuale');
+      // Se è nascosto, lo mostra e mette il cursore nel campo
+      if (container.style.display === 'none' || container.style.display === '') {
+        container.style.display = 'block';
+        setTimeout(() => document.getElementById('inputManuale').focus(), 100);
+      } else {
+        // Se è visibile, lo nasconde
+        container.style.display = 'none';
       }
-      inviaAlFoglio(nome); // Usa lo stesso canale della lettura NFC (con tutti i controlli!)
-      input.value = "";
     }
+    
+  function registrazioneManuale() {
+    const input = document.getElementById('inputManuale');
+    const nome = input.value.trim();
+    if (!nome) {
+      document.getElementById('status').innerText = "⚠️ Scrivi prima il nome del socio!";
+      return;
+    }
+    inviaAlFoglio(nome); 
+    input.value = ""; // Pulisce il campo
+    
+    // Nasconde di nuovo il contenitore dopo il salvataggio
+    document.getElementById('containerManuale').style.display = 'none'; 
+  }
     
     function normalizzaNome(testo) {
       return testo.toString().replace(/\s+/g, ' ').trim().toUpperCase();
