@@ -198,7 +198,7 @@
     }
     
     .overlay-testo {
-      font-family: 'RCV Font', cursive;
+      font-family: 'Barlow Condensed', cursive;
       font-size: 28px;
       color: var(--giallo-roma);
       letter-spacing: 2px;
